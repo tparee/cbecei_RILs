@@ -83,5 +83,17 @@ Haplotypes limits are refined by chosing breakpoints minimizing the hamming dist
 
 -04_inpute_RILs_missing_SNPs: Using inferred founding haplotype identity across RILs genome, we can impute missing SNPs and spot unlikely genotypes (genotyping error).
 
+========================
+ImageXpress_sex_xgboost
+========================
+
+Sex-specific size was measured by imaging the worms on a ImageXpress instruments and detecting them using the Andersen lab pipeline.
+To differentiate sexes, a XGBoost model was trained on metrics extracted by the Andersen pipeline.
+For objects in the training dataset, sexes was attributed visually by human, or using a strain with a sex-specific fluorescent reporter (QG4602)
+
+- training datasets/: contains training datasets and the script to train the XGBoost model.
+- models/: contains the trained XGBoost models
+- predictSex.R: script used to predict sexes of the worm objects detected by the Andersen pipeline on ImageXpress images.
+
 
 
