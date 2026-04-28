@@ -1,0 +1,7 @@
+species,chromosome,LCboundary(Mb),CRboundary(Mb),ChrLength(Mb),LeftPercent,CenterPercent,RightPercent,LeftArmRate(cM/Mb),CenterRate(cM/Mb),RightArmRate(cM/Mb),Domains
+becei,I,3.4,10,13.4,25.1,49.1,25.8,8.1,0.4,7.4,Yes
+becei,II,2.9,11,14,21,57.5,21.5,8,0.5,7.9,Yes
+becei,III,2.5,8.4,12.7,19.9,46.2,33.9,6.7,0.1,6.5,Yes
+becei,IV,3.3,10.1,13.7,24,49.4,26.6,8.8,0.3,6.5,Yes
+becei,V,2.4,12,15.2,15.7,63,21.3,9.9,0.6,10.9,Yes
+becei,X,11.7,16.6,24.8,47,19.8,33.2,2.2,0.7,3.7,Yes
