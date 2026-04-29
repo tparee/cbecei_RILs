@@ -17,50 +17,6 @@ get.K_ASV = function(GT){
   ASV
 }
 
-qqplot_data <- function(pvals) {
-  # Remove missing or invalid values
-  pvals <- pvals[!is.na(pvals) & pvals > 0 & pvals <= 1]
-  
-  # Number of valid p-values
-  n <- length(pvals)
-  if (n == 0) stop("No valid p-values provided.")
-  
-  # Sort observed p-values
-  observed <- sort(pvals)
-  
-  # Expected p-values under uniform(0,1)
-  expected <- (1:n) / (n + 1)
-  
-  # Transform both to -log10 scale
-  df <- data.frame(
-    expected = -log10(expected),
-    observed = -log10(observed)
-  )
-  
-  return(df)
-}
-
-
-bh_threshold <- function(pvals, q = 0.05, na.rm = TRUE) {
-  # remove missing if requested
-  if (na.rm) pvals <- pvals[!is.na(pvals)]
-  
-  # keep valid values
-  pvals <- pvals[pvals > 0 & pvals <= 1]
-  if (length(pvals) == 0) return(NA_real_)
-  
-  # compute BH adjusted p-values
-  adjp <- p.adjust(pvals, method = "BH")
-  
-  # find largest p-value that is still significant
-  sig_p <- pvals[adjp <= q]
-  
-  if (length(sig_p) == 0) return(NA_real_)
-  
-  # threshold is the max raw p-value that passes BH
-  return(max(sig_p))
-}
-
 
 
 ###################################################################
@@ -72,8 +28,8 @@ growthrates$log_hours_to_starve = log(growthrates$hours_to_starve)
 growthrates$strain = tstrsplit(growthrates$strain,"_")[[2]]
 growthrates = subset(growthrates, strain %in% meta$rilname[meta$panel == "α"])
 
-snps = as.data.frame(read_csv("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/RIX_fitness/beceiPanels_snps_pruned0.999_RIX_2026.csv"))
-genotypes <- as.matrix(fread("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/rils_geno_pruned.csv"))
+snps = as.data.frame(read_csv("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/beceiPanels_variantsInfo_pruned0.999.csv.gz"))
+genotypes <- as.matrix(fread("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/beceiPanels_geno_RILs_pruned0.999.csv.gz"))
 genotypes = (genotypes-0.5)*2
 #genotypes[genotypes == 0]=1
 
@@ -108,7 +64,7 @@ summary(modh2)$varcomp[1:2,1]/sum(summary(modh2)$varcomp[1:2,1])
 #############################################################################
 
 fixedBlock = F
-perm = F
+perm = T
 if(perm==T){n=1000; permutated_pvals = matrix(NA,ncol=n,nrow=6); set.seed(123)}else{n=1}
 
 if(fixedBlock){fixed_effect_modelMatrix = model.matrix(~ block, growthrates)}
@@ -158,9 +114,11 @@ for(i in 1:n){
     KCHR = KCHR.list[[CHR]]
     GTCHR = GTCHR.list[[CHR]]
     deltachr = deltas.list[[CHR]]
+    
     if(perm==T){
-      permorder = match(growthrates$strain, sample(unique(growthrates$strain), length(unique(growthrates$strain))))
-      GTCHR = GTCHR[permorder,] }
+      permorder = match(growthrates$strain, sample(unique(growthrates$strain)))
+      GTCHR = GTCHR[permorder,]
+      }
     
     if(fixedBlock){
       reschr = emmax_assoc(y=growthrates$log_hours_to_starve,G=GTCHR,
@@ -177,11 +135,17 @@ for(i in 1:n){
     res_LOCO = rbind(res_LOCO,reschr)
   }
   
-  if(perm==T){pperm_min = aggregate(p~chrom,res_LOCO,min,na.rm=T); permutated_pvals[,i] = pperm_min$p}
+  if(perm==T){
+    minp = min(res_LOCO$pval, na.rm = T)
+    outfile = "analysis/temp/permutated_pval.txt"
+    cat(minp, file = outfile, append = TRUE, sep = "\n")
+  }
 }
 
 
 ggplot(reschr, aes(cm, -log10(pval)))+geom_point()
+
+
 threshold_alpha0.05 = -log10(quantile( apply(permutated_pvals, 2, min) , prob = 0.05)) # 6.450801 
 threshold_alpha0.1 = -log10(quantile( apply(permutated_pvals, 2, min) , prob = 0.1)) # 5.898521 
 #save(permutated_pvals, file= "analysis/permutated_pvals_growthrate.Rdata")

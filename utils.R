@@ -256,3 +256,51 @@ scientific_10 <- function(x) {
 
 
 relative = function(x){(x-min(x, na.rm=T))/(max(x, na.rm=T)-min(x, na.rm=T))}
+
+
+
+
+qqplot_data <- function(pvals) {
+  # Remove missing or invalid values
+  pvals <- pvals[!is.na(pvals) & pvals > 0 & pvals <= 1]
+  
+  # Number of valid p-values
+  n <- length(pvals)
+  if (n == 0) stop("No valid p-values provided.")
+  
+  # Sort observed p-values
+  observed <- sort(pvals)
+  
+  # Expected p-values under uniform(0,1)
+  expected <- (1:n) / (n + 1)
+  
+  # Transform both to -log10 scale
+  df <- data.frame(
+    expected = -log10(expected),
+    observed = -log10(observed)
+  )
+  
+  return(df)
+}
+
+
+bh_threshold <- function(pvals, q = 0.05, na.rm = TRUE) {
+  # remove missing if requested
+  if (na.rm) pvals <- pvals[!is.na(pvals)]
+  
+  # keep valid values
+  pvals <- pvals[pvals > 0 & pvals <= 1]
+  if (length(pvals) == 0) return(NA_real_)
+  
+  # compute BH adjusted p-values
+  adjp <- p.adjust(pvals, method = "BH")
+  
+  # find largest p-value that is still significant
+  sig_p <- pvals[adjp <= q]
+  
+  if (length(sig_p) == 0) return(NA_real_)
+  
+  # threshold is the max raw p-value that passes BH
+  return(max(sig_p))
+}
+

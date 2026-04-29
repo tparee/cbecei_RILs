@@ -54,6 +54,8 @@ emmax_assoc <- function(y, G, covar = NULL, kinship, delta, verbose = TRUE){
     gj <- G[, j] # genotype vector at the marker j
     # Mean impute if some missing
     if(any(is.na(gj))) gj[is.na(gj)] <- mean(gj, na.rm = TRUE)
+    
+    if(var(gj) == 0){return(data.frame(pval = NA, beta = NA, SE = NA))}
     g_t <- crossprod(U, gj) / sqrt(d + delta) # spectral transformation
     
     # Ordinary least square regression on tranformed data

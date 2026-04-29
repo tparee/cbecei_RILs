@@ -9,17 +9,17 @@ for(CHR in c("I",'III', 'IV','V', 'X')){
 ###########################
 ### IMPORT DATA  ##########
 
-setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/RILs/suppl/")
+setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/suppl/")
 load(file=paste0("haplotypeReconstruction/temp/rils_halplotypes_stringentFiltering/",CHR,"_rils_haplotypes_stringentFiltering.Rdata"))
 load(paste0("haplotypeReconstruction/temp/phased_founders_base/",CHR,"_beceiFounderPhasedHaplotypes_base.Rdata")) # Founder phased haplotypes
 snps = phasedfounderhaplotypes[,1:4] # snps info
 snps$pos=snps$POS
 
-genoall = as.data.frame(fread(paste0("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/RILs/suppl/private/alignment&variantCalling/VCF/RILs/unfiltered/",CHR,"_becei_variants_GT.csv.gz")))
+genoall = as.data.frame(fread(paste0("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/suppl/private/alignment&variantCalling/VCF/RILs/unfiltered/",CHR,"_becei_variants_GT.csv.gz")))
 snpsall=genoall[,1:6]
 genoall=as.matrix(genoall[,-1:-6])
 
-#table(genoall[snpsall$POS == 308200,])
+
 
 ###########################
 ### Little format change ##
