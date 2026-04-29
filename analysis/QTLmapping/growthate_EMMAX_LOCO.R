@@ -6,8 +6,10 @@ library(data.table)
 library(ggplot2)
 library(ggplot2)
 library(gridExtra)
-setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/becei_rils/")
+setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/")
+meta = read_csv("suppl/RILs_sequencing_metadata.csv")
 source("utils.R")
+source("analysis/QTLmapping/EMMAX_functions.R")
 
 get.K_ASV = function(GT){
   ASV = scale(GT,center=T,scale=F) %*% t(scale(GT,center=T,scale=F))
@@ -67,15 +69,14 @@ bh_threshold <- function(pvals, q = 0.05, na.rm = TRUE) {
 
 growthrates = read.csv( "phenotypes/growthrates.csv", sep = " ")
 growthrates$log_hours_to_starve = log(growthrates$hours_to_starve)
+growthrates$strain = tstrsplit(growthrates$strain,"_")[[2]]
+growthrates = subset(growthrates, strain %in% meta$rilname[meta$panel == "α"])
 
-genotypes =  as.matrix(read_csv("genotypes/beceiPanels_geno_RILs_pruned0.9999.csv"))
-snps =  as.data.frame(fread("genotypes/beceiPanels_snps_pruned0.9999.csv"))
+snps = as.data.frame(read_csv("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/RIX_fitness/beceiPanels_snps_pruned0.999_RIX_2026.csv"))
+genotypes <- as.matrix(fread("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/rils_geno_pruned.csv"))
 genotypes = (genotypes-0.5)*2
-genotypes[genotypes == 0]=1
+#genotypes[genotypes == 0]=1
 
-growthrates = subset(growthrates, grepl("A_", strain))
-
-colnames(genotypes) = tstrsplit(colnames(genotypes), "-")[[1]]
 growthrates = subset(growthrates, strain %in% colnames(genotypes))
 genotypes = genotypes[,colnames(genotypes) %in% growthrates$strain]
 
@@ -100,7 +101,7 @@ modh2 <- mmer(
 
 summary(modh2)$varcomp[1:2,1]/sum(summary(modh2)$varcomp[1:2,1])
 
-# block:0.1419741, K: 0.8580259
+# block:0.1340243, K: 0.8659757
 
 #############################################################################
 ############### SNP by EMMAX + LOCO #########################################
@@ -110,10 +111,11 @@ fixedBlock = F
 perm = F
 if(perm==T){n=1000; permutated_pvals = matrix(NA,ncol=n,nrow=6); set.seed(123)}else{n=1}
 
-fixed_effect_modelMatrix = model.matrix(~ block, growthrates)
+if(fixedBlock){fixed_effect_modelMatrix = model.matrix(~ block, growthrates)}
 
 KCHR.list = list(I=NULL, II=NULL, III=NULL, IV = NULL, V=NULL, X=NULL)
 GTCHR.list = list(I=NULL, II=NULL, III=NULL, IV = NULL, V=NULL, X=NULL)
+deltas.list =list(I=NULL, II=NULL, III=NULL, IV = NULL, V=NULL, X=NULL)
 
 for(CHR in c("I",'II', 'III', 'IV', 'V','X')){
   KCHR = get.K_ASV(GT[,snps$chrom != CHR])
@@ -126,41 +128,60 @@ for(CHR in c("I",'II', 'III', 'IV', 'V','X')){
       data = growthrates
     )
     
-    var_prop = summary(modh2)$varcomp[2:3,1]/sum(summary(modh2)$varcomp[2:3,1])
+    vcomp = summary(modh2)$varcomp[1:3,1]
     IndicatorMatrix_block = model.matrix(~ block-1, growthrates)
     vcov_block = crossprod( t(IndicatorMatrix_block))
-    KCHR =var_prop[2]*KCHR + var_prop[1]*vcov_block
+    KCHR = (vcomp[2]*KCHR + vcomp[1]*vcov_block)/sum(vcomp[1:2])
+    deltachr = vcomp[3]/sum(vcomp[1:2])
+    
+  }else{
+    modh2 <- mmer(
+      log_hours_to_starve ~ as.factor(block),
+      random = ~ vsr(id, Gu = KCHR),
+      data = growthrates
+    )
+    
+    vcomp = summary(modh2)$varcomp[1:32,1]
+    deltachr = vcomp[2]/vcomp[1]
   }
   
   KCHR.list[[CHR]] = KCHR
   GTCHR.list[[CHR]] = GTCHR
-  
+  deltas.list[[CHR]] = deltachr
+
 }
 
 for(i in 1:n){
   if(perm == T & i %% 100 == 0){print(i)}
   res_LOCO = NULL
   for(CHR in c("I",'II', 'III', 'IV', 'V','X')){
-    KCHR = get.K_ASV(GT[,snps$chrom != CHR])
-    GTCHR = GT[,snps$chrom == CHR]
+    KCHR = KCHR.list[[CHR]]
+    GTCHR = GTCHR.list[[CHR]]
+    deltachr = deltas.list[[CHR]]
     if(perm==T){
       permorder = match(growthrates$strain, sample(unique(growthrates$strain), length(unique(growthrates$strain))))
       GTCHR = GTCHR[permorder,] }
     
     if(fixedBlock){
-      reschr = emmax_assoc(y=growthrates$log_hours_to_starve,G=GTCHR, covar = fixed_effect_modelMatrix, kinship = KCHR, verbose = !perm)#, weights = growthrates$weight_rotated)
+      reschr = emmax_assoc(y=growthrates$log_hours_to_starve,G=GTCHR,
+                           covar = fixed_effect_modelMatrix, kinship = KCHR,
+                           delta = deltachr, verbose = !perm)
     }else{
-      reschr = emmax_assoc(y=growthrates$log_hours_to_starve,G=GTCHR, covar = NULL, kinship = KCHR, verbose = !perm)#, weights = growthrates$weight_rotated)
+      reschr = emmax_assoc(y=growthrates$log_hours_to_starve,
+                           G=GTCHR, covar = NULL, kinship = KCHR,
+                           delta = deltachr, verbose = !perm)
     }
     
-    reschr = reschr$results
-    reschr = cbind(snps[snps$chrom == CHR,], reschr[,-1])
+    
+    reschr = cbind(snps[snps$chrom == CHR,], reschr)
     res_LOCO = rbind(res_LOCO,reschr)
   }
   
   if(perm==T){pperm_min = aggregate(p~chrom,res_LOCO,min,na.rm=T); permutated_pvals[,i] = pperm_min$p}
 }
 
+
+ggplot(reschr, aes(cm, -log10(pval)))+geom_point()
 threshold_alpha0.05 = -log10(quantile( apply(permutated_pvals, 2, min) , prob = 0.05)) # 6.450801 
 threshold_alpha0.1 = -log10(quantile( apply(permutated_pvals, 2, min) , prob = 0.1)) # 5.898521 
 #save(permutated_pvals, file= "analysis/permutated_pvals_growthrate.Rdata")
