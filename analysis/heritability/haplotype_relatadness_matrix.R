@@ -237,7 +237,7 @@ for(CHR in c("I","II","III",'IV',"V",'X')){
   Garr <- abind::abind(GMATS, along = 3)    # stack into 3D array
   Ghap <- apply(Garr, c(1, 2), mean, na.rm=T) 
   
-  write.csv(Ghap, file = paste0("temp/chr",CHR, "_Ghap.csv"), row.names=F)
+  write.csv(Ghap, file = paste0("analysis/heritability/haplotype_relatedness_matrix/chr",CHR, "_Ghap.csv"), row.names=F)
 }
 
 
