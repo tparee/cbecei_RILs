@@ -242,68 +242,20 @@ for(CHR in c("I","II","III",'IV',"V",'X')){
 
 
 
+weights = c(rep(50,5),25)
+weights = weights/sum(weights)
+Ghap=NULL
+for(CHR in c("I","II","III",'IV',"V",'X')){
+  print(CHR)
+  g = fread(file = paste0("analysis/heritability/haplotype_relatedness_matrix/chr",CHR, "_Ghap.csv"))
+  g = as.matrix(g)
+  rownames(g)=colnames(g)
+  g=g*weights[ which(c("I","II","III",'IV',"V",'X')==CHR) ]
+  if(is.null(Ghap)){Ghap=g}else{
+    Ghap=Ghap+g
+  }
+}
 
+#write.csv(Ghap, file = paste0("analysis/heritability/haplotype_relatedness_matrix/Ghap_haplotypeRelatednessMatrix.csv"),row.names = F)
 
-# weights = c(rep(50,5),25)
-# weights = weights/sum(weights)
-# Ghap=NULL
-# for(CHR in c("I","II","III",'IV',"V",'X')){
-#   g = fread(file = paste0("analysis/GWAS/chr",CHR, "_Ghap.csv"))
-#   g = as.matrix(g)
-#   rownames(g)=colnames(g)
-#   g=g*weights[ which(c("I","II","III",'IV',"V",'X')==CHR) ]
-#   if(is.null(Ghap)){Ghap=g}else{
-#     Ghap=Ghap+g
-#   }
-# }
-# 
-# write.csv(Ghap, file = paste0("analysis/GWAS/haplotypeRelatednessMatrix.csv"),row.names = F)
-
-Ghap = as.matrix(read_csv("analysis/GWAS/haplotypeRelatednessMatrix.csv"))
-rownames(Ghap) = colnames(Ghap)
-
-         
-Ghap = reshape2::melt(Ghap)
-Ghap$cross = paste0(tstrsplit(Ghap$Var1, '_')[[1]],tstrsplit(Ghap$Var2, '_')[[1]])
-Ghap$cross[Ghap$cross == "BA"] = 'AB'
-Ghap$Var1 = as.character(Ghap$Var1)
-Ghap$Var2 = as.character(Ghap$Var2)
-Ghap = Ghap[Ghap$Var1 <= Ghap$Var2,]
-
-ggplot(Ghap, aes(cross,value, color = cross))+geom_boxplot()
-
-
-
-
-genotypes =  as.matrix(read_csv("~/Downloads/beceiPanels_geno_RILs_pruned0.9999.csv"))
-colnames(genotypes) = tstrsplit(colnames(genotypes),'-')[[1]]
-afs = apply(genotypes, 1, function(x){mean(x[x==0 | x==1],na.rm=T)})
-snps =  as.data.frame(read_csv("~/Downloads/beceiPanels_snps_pruned0.9999.csv"))
-
-genotypes = (genotypes-0.5)*2
-genotypes[genotypes == 0]=1
-
-
-GT = t(genotypes)
-GT[is.na(GT)]=0
-
-
-A = sommer::A.mat(GT)
-
-
-A = reshape2::melt(A)
-A$cross = paste0(tstrsplit(A$Var1, '_')[[1]],tstrsplit(A$Var2, '_')[[1]])
-A$cross[A$cross == "BA"] = 'AB'
-colnames(A)[3] = 'gsim_VR' # Van raden
-colnames(Ghap)[3] = 'gsim_hap' # Van raden
-
-ggplot(A[A$Var1 != A$Var2,], aes(cross, value, color = cross))+geom_boxplot()
-test = merge(A,Ghap)
-ggplot(test[test$Var1 != test$Var2,], aes(gsim_VR, gsim_hap, color = cross))+geom_point(shape=1, alpha=0.5)
-
-mean(test$gsim_VR)
-mean(test$gsim_hap)
-
-
-
-                
+   
