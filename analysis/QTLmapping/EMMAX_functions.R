@@ -48,6 +48,7 @@ emmax_assoc <- function(y, G, covar = NULL, kinship, delta, verbose = TRUE){
   
   if(verbose) message("OLS completed by:")
   m <- ncol(G) # number of markers
+  p <- ncol(covar)
   results = do.call(rbind, lapply(1:m, function(j){
     if(j %% 1000 == 0 & verbose){message( paste0(round(100*j/m, digits = 2), "%") )}
     
@@ -59,11 +60,30 @@ emmax_assoc <- function(y, G, covar = NULL, kinship, delta, verbose = TRUE){
     g_t <- crossprod(U, gj) / sqrt(d + delta) # spectral transformation
     
     # Ordinary least square regression on tranformed data
-    ols = lm(y_t ~ X_t + g_t -1)
-    p = summary(ols)$coef["g_t",4]
-    beta = summary(ols)$coef["g_t",1]
-    se = summary(ols)$coef["g_t",2]
-    return(data.frame(pval = p, beta = beta, SE = se))
+    # using built in lm() function in R
+    #ols = lm(y_t ~ X_t + g_t -1)
+    #ols =  summary(ols)$coef["g_t",]
+    #pval = ols[4]
+    #beta = ols[1]
+    #se = ols[2]
+    
+    # Equivalent but ~3x faster:
+    W <- cbind(X_t, g_t)
+    XtW <- crossprod(W, W)
+    if(det(XtW) < 1e-12){
+      return(data.frame(pval = NA, beta = NA, SE = NA))
+    }
+    b_hat <- solve(XtW, crossprod(W, y_t))
+    beta_g <- b_hat[p + 1]
+    resid <- y_t - W %*% b_hat
+    sigma2 <- sum(resid^2) / (n - ncol(W))
+    var_b <- sigma2 * solve(XtW)
+    se_g <- sqrt(var_b[p + 1, p + 1])
+    tstat <- beta_g / se_g
+    df <- n - ncol(W)
+    pval <- 2 * pt(-abs(tstat), df)
+    
+    return(data.frame(pval = pval, beta = beta, SE = se))
   }))
     
   return(results)

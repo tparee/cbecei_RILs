@@ -9,7 +9,7 @@ library(data.table)
 library(ggplot2)
 library(sommer)
 
-PATH = "/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/becei_rils/"
+PATH = "/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/"
 setwd(PATH)
 
 source("utils.R")
@@ -17,16 +17,16 @@ source("utils.R")
 WinSize_cM = 1
 
 
-permutation = T
+permutation = F
 # Import data 
 
-Ghap = as.matrix(read_csv("analysis/heritability/haplotypeRelatednessMatrix.csv"))
+Ghap = as.matrix(read_csv("analysis/heritability/haplotype_relatedness_matrix/Ghap_haplotypeRelatednessMatrix.csv"))
 growthrates = read.csv( "phenotypes/growthrates.csv", sep = " ")
 growthrates$log_hours_to_starve = log(growthrates$hours_to_starve)
-growthrates = subset(growthrates, type == 'RIL' & grepl("A_", strain) & strain %in% colnames(Ghap))
-growthrates$rilname = growthrates$strain
+growthrates$rilname = tstrsplit(growthrates$strain, "_")[[2]]
+growthrates = subset(growthrates, grepl("A_", strain) & rilname %in% colnames(Ghap))
 rownames(Ghap) = colnames(Ghap)
-Ghap = Ghap[rownames(Ghap) %in% growthrates$strain,rownames(Ghap) %in% growthrates$strain]
+Ghap = Ghap[rownames(Ghap) %in% growthrates$rilname,rownames(Ghap) %in% growthrates$rilname]
 
 
 if(permutation){
