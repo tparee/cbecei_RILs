@@ -61,11 +61,11 @@ emmax_assoc <- function(y, G, covar = NULL, kinship, delta, verbose = TRUE){
     
     # Ordinary least square regression on tranformed data
     # using built in lm() function in R
-    #ols = lm(y_t ~ X_t + g_t -1)
-    #ols =  summary(ols)$coef["g_t",]
-    #pval = ols[4]
-    #beta = ols[1]
-    #se = ols[2]
+    # ols = lm(y_t ~ X_t + g_t -1)
+    # ols =  summary(ols)$coef["g_t",]
+    # pval = ols[4]
+    # beta_g = ols[1]
+    # se_g = ols[2]
     
     # Equivalent but ~3x faster:
     W <- cbind(X_t, g_t)
@@ -83,7 +83,7 @@ emmax_assoc <- function(y, G, covar = NULL, kinship, delta, verbose = TRUE){
     df <- n - ncol(W)
     pval <- 2 * pt(-abs(tstat), df)
     
-    return(data.frame(pval = pval, beta = beta, SE = se))
+    return(data.frame(pval = pval, beta = beta_g, SE = se_g))
   }))
     
   return(results)
