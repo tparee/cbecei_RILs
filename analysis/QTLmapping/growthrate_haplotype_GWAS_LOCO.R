@@ -9,6 +9,7 @@ library(data.table)
 library(ggplot2)
 library(sommer)
 
+
 PATH = "/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/"
 setwd(PATH)
 
