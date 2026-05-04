@@ -137,7 +137,7 @@ for(i in 1:n){
   
   if(perm==T){
     minp = min(res_LOCO$pval, na.rm = T)
-    outfile = "analysis/temp/permutated_pval.txt"
+    outfile = "analysis/temp/permutated_pval_growthrate.txt"
     cat(minp, file = outfile, append = TRUE, sep = "\n")
   }
 }

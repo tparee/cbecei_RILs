@@ -30,7 +30,7 @@ Ghap = Ghap[rownames(Ghap) %in% growthrates$rilname,rownames(Ghap) %in% growthra
 
 
 if(permutation){
-  niter = 100
+  niter = 500
 }else{
   niter = 1
 }
@@ -41,12 +41,12 @@ HAPCHR.list = list(I=NULL, II=NULL, III=NULL, IV = NULL, V=NULL, X=NULL)
 
 for(CHR in c("I",'II', 'III', 'IV', 'V','X')){
   
-  snps = as.data.frame(read_csv(paste0("genotypes/chr",CHR,"_beceiPanels_snps_founders&Rils_haplotypeResolved_V1.csv.gz")))
-  fgt = as.matrix(read_csv(paste0("genotypes/chr",CHR,"_beceiPanels_geno_founders_haplotypeResolved_V1.csv.gz")))
+  snps = as.data.frame(read_csv(paste0("genotypes/",CHR,"_becei_variantInfo_founders&Rils.csv.gz")))
+  fgt = as.matrix(read_csv(paste0("genotypes/",CHR,"_becei_genotypes_founders.csv.gz")))
   fgt = fgt[,c("FA.g1","FA.g2","FM.g1","FM.g2")]
   
-  haplo = as.data.frame(read_csv(paste0("haplotypes/chr",CHR,"_RILs_founderHaplotypeBlocks_V1.csv")))
-  haplo = subset(haplo, grepl("A_",haplo$rilname))
+  haplo = as.data.frame(read_csv(paste0("haplotypes/",CHR,"_rils_foundingHaplotypesBlocks.csv")))
+  haplo = subset(haplo, rilname %in% growthrates$rilname)
   
   # Add x cM bins
   cuthere = seq(min(snps$cM), max(snps$cM),WinSize_cM)
@@ -84,7 +84,7 @@ for(CHR in c("I",'II', 'III', 'IV', 'V','X')){
       #hap = split(haplowin, haplowin$rilname)[[7]]
       #hap = subset(haplowin, rilname == "A_QG3119")
       hap = hap[which.max(hap$overlap),]
-      foundernames = unlist(strsplit(hap$founders,";"))
+      foundernames = unlist(strsplit(hap$founder,";"))
       foundergroup = unique(hapgroups[foundernames])
       
       if(length(foundergroup) > 1){
@@ -110,7 +110,7 @@ for(CHR in c("I",'II', 'III', 'IV', 'V','X')){
   weights = weights/sum(weights)
   Ghap=NULL
   for(CHR2 in c("I","II","III",'IV',"V",'X')[otherchrom]){
-    g = fread(file = paste0("analysis/heritability/haplotypeRelatednessMatrix/chr",CHR2, "_Ghap.csv"))
+    g = fread(file = paste0("analysis/heritability/haplotype_relatedness_matrix/chr",CHR2, "_Ghap.csv"))
     g = as.matrix(g)
     rownames(g)=colnames(g)
     g=g*weights[ which(c("I","II","III",'IV',"V",'X')[otherchrom]==CHR2) ]
@@ -141,8 +141,6 @@ for(n in 1:niter){
     if(permutation){
       permorder = match(growthrates$strain, sample(unique(growthrates$strain), length(unique(growthrates$strain))))
       haplomatrix = haplomatrix[,permorder] }
-    
-
     
 
     res = lapply(1:nrow(haplomatrix), function(i){
@@ -199,7 +197,7 @@ for(n in 1:niter){
   
   if(permutation){
     minp = min(hapgwas$pval)
-    write(minp, file = 'analysis/QTLmapping/haplotypeGWAS_permutation_results_growthrate_LOCO.txt', append = TRUE)
+    write(minp, file = 'analysis/temp/haplotypeGWAS_permutation_results_growthrate_LOCO.txt', append = TRUE)
     
   }else{
     save(hapgwas, file = "analysis/QTLmapping/haplotypeGWAS_growthrate_results_LOCO.Rdata")
