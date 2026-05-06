@@ -1,4 +1,4 @@
-CHR = "I"
+
 
 setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/")
 source("utils.R")
@@ -232,4 +232,9 @@ pdom=ggplot(LDdom, aes((ppos1+ppos2)/2000,mean.r2, linetype = domain, color = pa
   xlab("Physical position (kb)")+
   ylab(expression(r^2))+
   theme(legend.key.height = unit(0.3, "cm"))
+
+
+ggsave(pdom, file="figures/Fig_Linkage_by_recdom.png", width=4, height=1.3, dpi=1200)
+
+
 
