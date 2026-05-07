@@ -1,4 +1,4 @@
-# Supplementary Directory
+# Supplement Directory
 
 This supplementary directory contains pipelines used to:
 
