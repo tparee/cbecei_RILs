@@ -64,19 +64,11 @@ scaled (variance = 1 and mean = 0 within each sex; `scaled_mean_worm_length_um_f
 
 ### Sexually Divergent and Convergent Axes
 
-The table also includes:
+The table also includes `div` and `conv`. These correspond to the coordinates of each strain after a 45° rotation of the male-versus-female scaled size plane. 
 
-- `div`
-- `conv`
+See: Methods section of the cooresponding paper, or  https://doi.org/10.1371/journal.pbio.3000244 for methodological details.
 
-These correspond to the coordinates of each strain after a 45° rotation of the male-versus-female size plane.
-
-See:
-
-- Methods section
-- https://doi.org/10.1371/journal.pbio.3000244
-
-for an example and methodological details.
+Summary statistics were used for GWAS analyses and heritability estimates
 
 ---
 
@@ -90,7 +82,4 @@ lm(worm_length_um ~ sex + block + strain:sex + sex:block, data = size)
 
 These estimates were used only for plotting Figure 3B.
 
-Summary statistics were used for:
 
-- GWAS analyses
-- Heritability estimates
