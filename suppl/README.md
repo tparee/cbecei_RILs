@@ -1,99 +1,262 @@
-##########################
-### suppl directories: ###
+# Supplementary Directories
 
-This supplementary directory contains pipeline used to:
-1) Jointly infer the founding haplotypes and filter the SNPs.
-2) Measure sex-specific size from ImageXpress pictures
+This supplementary directory contains pipelines used to:
 
+1. Jointly infer the founding haplotypes and filter SNPs.
+2. Measure sex-specific body size from ImageXpress images.
 
-***************************************************************
-1) Jointly infer the founding haplotypes and filter the SNPs.
-***************************************************************
+---
 
-The .fastq files were aligned on the C.becei QG2082 reference genome (doi: https://doi.org/10.1101/2025.05.09.653148).
-The variants were called using bcftools mpileup, keeping on variant with QUAL > 20.
-The chosen genotype is the one that minimize the PL (Phred-scaled Likelihoods). Genotype with GQ < 10 (likelihood: < 0.9) were set as NA.
+# 1. Joint Inference of Founding Haplotypes and SNP Filtering
 
-As the RILs are a mosaic of recombined haplotypes, the strategy to filter variants here is to infer the haplotype block structure and keep the SNPs that are consistent with it.
-Reconstructing founding haplotypes was done by using pool sequencing data from F1 progeny of founding cross (crossPool) and linkage data available in RILs.
-For the initial backbone of founding haplotype reconstruction, a set of ver high confidence SNP was used (see genotype_stringentFiltering)
-For this set of SNP, log likelihood of observing the CrossPools allelic depth was calculated for every possible combination of three founder biallelic genotype (see pools).
-Founding haplotypes were then estimated by selecting combination of RILs haplotype blocks that maximize the founder genotype log likelihood (see haplotypeReconstruction).
-Finally The founder identity across RILs genome was inferred. SNP that are consitent with the inferred haplotype mosaic at kept, other are filtered out (see haplotypeReconstruction). 
+The `.fastq` files were aligned to the *C. becei* QG2082 reference genome  
+(DOI: https://doi.org/10.1101/2025.05.09.653148).
 
-The number of SNP kept at each step is reported in XXXX.csv
+Variants were called using `bcftools mpileup`, retaining variants with:
 
-============================
-genotype_stringentFiltering
-============================
+- `QUAL > 20`
+
+The selected genotype for each site is the genotype minimizing the PL value (Phred-scaled likelihood). Genotypes with:
+
+- `GQ < 10` (genotype likelihood < 0.9)
+
+were set to `NA`.
+
+Because the RILs are mosaics of recombined founding haplotypes, variant filtering was performed by reconstructing the haplotype block structure and retaining only SNPs consistent with this structure.
+
+Founding haplotypes were reconstructed using:
+
+- Pool-sequencing data from F1 progeny of founding crosses (`crossPool`)
+- Linkage information from the RILs
+
+An initial backbone of highly confident SNPs was first generated (see `genotype_stringentFiltering`).
+
+For these SNPs, the log-likelihood of observing the allelic depths in the CrossPools was computed for every possible combination of three founder biallelic genotypes (see `pools`).
+
+Founding haplotypes were then estimated by selecting combinations of RIL haplotype blocks that maximize the founder genotype log-likelihood (see `haplotypeReconstruction`).
+
+Finally, founder identity across the RIL genomes was inferred. SNPs consistent with the inferred haplotype mosaic were retained, while inconsistent SNPs were filtered out.
+
+The number of SNPs retained at each filtering step is reported in:
+
+```text
+XXXX.csv
+```
+
+---
+
+# `genotype_stringentFiltering`
+
+## Contents
+
+### `[N]_genotypes_becei_RILs_stringentFiltering.csv`
+
+RIL genotype table:
+
+```text
+[SNPs × RILs]
+```
+
+generated using highly stringent filtering criteria.
+
+### `[N]_genotypes_snps_RILs_stringentFiltering.csv`
+
+Corresponding SNP annotation table.
+
+### Chromosome notation
+
+`[N]` corresponds to the chromosome:
+
+```text
+I, II, III, IV, V, X
+```
+
+## Stringent Filtering Parameters
+
+### Variant-level filtering
+
+```text
+QUAL == 999
+MQ >= 59
+DP > 2e4
+DP < 3e4
+MQSB > 0.001
+VDB > 0.001
+RPB > 0.001
+```
+
+### Genotype frequency filtering
+
+Removes:
+
+- Fixed variants
+- Frequently missing variants
+- Suspiciously heterozygous variants
+
+Criteria:
+
+```text
+n_miss > 10
+n_het < 10
+n_ref > 0
+n_alt > 0
+```
+
+### CrossPool depth filtering
+
+```text
+DP_crossApool >= 10
+DP_crossBpool >= 10
+DP_crossCpool >= 10
+```
+
+## Purpose
+
+These tables are intended for construction of the initial backbone of founding haplotypes.
+
+---
+
+# `pools`
+
+## Contents
+
+### `[N]_AllelicDepth_becei_CrossPools_stringentFiltering.csv`
 
 Contains:
-- [N]_genotypes_becei_RILs_stringentFiltering.csv: RIls genotype table [snps x RILs] with very stringent filtering
 
-- [N]_genotypes_snps_RILs_stringentFiltering.csv: corresponding snps information
+- SNP annotations
+- Allelic depth information (`ref`, `alt`)
+- Pool and population sequencing data
 
-* [N] is the chromosome (i.e., I,II,III,IV,V,X)
+## Pool Definitions
 
-* Stringent filtering parameters:
-- Filtering based on variant quality: QUAL == 999 & MQ >= 59 & DP > 2e4 & DP < 3e4 & MQSB > 0.001 & VDB > 0.001 & RPB > 0.001
-- Filtering based on genotype frequency (remove fixed, often missing and suspiciously high heterozygous): n_miss > 10 & n_het < 10 & n_ref > 0 & n_alt > 0
-- Filtering based depth in crosspool: DP_crossApool >= 10 & DP_crossBpool >= 10 & DP_crossCpool >= 10
+- `CrossApool`: F1 progeny of Cross A (`Founder A × Founder M`)
+- `CrossBpool`: F1 progeny of Cross B (`Founder B × Founder M`)
+- `CrossCpool`: F1 progeny of `Founder M × QG2082` (reference strain)
 
-* These tables are meant to be used to construct the backbones of founding haplotypes
+`POPA` and `POPB` correspond to populations A and B after five generations of outcrossing. Each population was sequenced in triplicate.
 
+The SNP set is identical to the one in `genotype_stringentFiltering`.
 
-=============
-    pools
-=============
+---
+
+### `[N]_founder_genotype_loglikelihood.csv`
+
+Contains the log-likelihood of observing allelic depths in F1 pools for every possible founder diploid genotype combination.
+
+## Founder Genotype Encoding
+
+Founder genotype scenarios are encoded in the column names.
+
+Example:
+
+```text
+FA:0.5;FB:0;FM:1
+```
+
+corresponds to:
+
+- Founder A: heterozygous
+- Founder B: homozygous reference
+- Founder M: homozygous alternative
+
+---
+
+### `FounderGenotype_logLikelihood.R`
+
+R script used to compute founder genotype log-likelihoods.
+
+---
+
+# `haplotypeReconstruction`
+
+## `00_beceiFounders_phasing.R`
+
+Infers the six founding haplotypes using the stringent SNP set.
+
+### Method Overview
+
+- The genome is analyzed using overlapping windows of 500 SNPs.
+- Common haplotypes in the RILs are inferred.
+- Haplotypes are assigned to founders by maximizing the founder genotype log-likelihood estimated from pool sequencing data.
+
+### Phasing Strategy
+
+When heterozygous segments are interrupted by homozygous regions, phasing is selected to minimize the number of recombination breakpoints across RILs.
+
+---
+
+## `01_haploCall_RILs.R`
+
+Calls inferred founding haplotype blocks in RILs.
+
+### Method Overview
+
+- Multiple genomic windows of variable size are generated for each RIL.
+- If present, a founding haplotype matching at ≥99% similarity is assigned.
+- Haplotype boundaries are refined by selecting breakpoints minimizing the Hamming distance between inferred haplotypes and observed genotypes.
+
+---
+
+## `02_filterHaplotypeConsistentVariants`
+
+Checks compatibility between each SNP (`QUAL > 20`) and the inferred haplotype structure.
+
+### Compatibility Criterion
+
+A SNP is considered compatible if it is monomorphic within each founding haplotype.
+
+Otherwise, the SNP would imply more than six founding haplotypes, which is inconsistent with the dataset design.
+
+---
+
+## `03_haploCall_RILs2.R`
+
+Recomputes haplotype blocks using the complete filtered SNP set.
+
+The increased SNP density improves breakpoint resolution.
+
+---
+
+## `04_inpute_RILs_missing_SNPs`
+
+Uses inferred founding haplotype identities across the RIL genomes to:
+
+- Impute missing SNP genotypes
+- Detect unlikely genotypes consistent with genotyping errors
+
+---
+
+# `ImageXpress_sex_xgboost`
+
+Sex-specific body size was measured using ImageXpress imaging and worm detection from the Andersen lab pipeline.
+
+Sex classification was performed using an XGBoost model trained on features extracted from the Andersen pipeline.
+
+Training labels were assigned either:
+
+- Manually by visual inspection
+- Using strain `QG4602`, which carries a sex-specific fluorescent reporter
+
+---
+
+## Contents
+
+### `training datasets/`
 
 Contains:
-- [N]_AllelicDepth_becei_CrossPools_stringentFiltering.csv: snps info and allelic depth [ref,alt] for pools and populations
 
-* Note:
-CrossApool are the F1 progeny of cross A (Founder A x Founder M)
-CrossBpool are the F1 progeny of cross B (Founder B x Founder M)
-CrossCpool are the F1 progeny of Founder M x QG2082 (reference strains)
-POPA and POPB are the population A and B after the 5 generations of outcrossing, they have been sequenced in triplicate
+- Training datasets
+- Scripts used to train the XGBoost model
 
-* The snps are the same as genotype_stringentFiltering
+---
 
-- [N]__founder_genotype_loglikelihood.csv: log likelihood of observing allelic depth in F1 pools for each possible founders diploid genotype.
+### `models/`
 
-* The scenario of founders genotype is in the column names
-(ex: "FA:0.5;FB:0;FM:1 is the scenario that founder A is heterozygous, founder B is homozygous for the reference allele and founder M is homozygous for the alternative allele)
+Contains trained XGBoost models.
 
-- FounderGenotype_logLikelihood.R: script used to compute the log likelihood
+---
 
-========================
-haplotypeReconstruction
-========================
+### `predictSex.R`
 
-- 00_beceiFounders_phasing.R: the script infer six founding haplotype for the stringentFiltering SNP set. 
-* Across 500 overlapping SNP windows, the script infer common haplotype in RILs and attribute them to founder in a way that maximize the founder genotype loglikelihood (estimated from pools)
-* Phase between heterozygous segment interrupted by homozygous segment is chosen so it minimize the number of recombination breakpoints in the RILs.
-
--01_haploCall_RILs.R: The script call inferred founding haplotype blocks in RILs. 
-* Briefly, for a given RILs, many genomic windows of variable size are generated and, if it exist, the founding haplotype with a 99% match is returned.
-Haplotypes limits are refined by chosing breakpoints minimizing the hamming distance between inferred haplotype and observed genotype.
-
--02_filterHaplotypeConsistentVariants: Compatibility with haplotype structure is checked for every called SNP with QUAL > 20/
-* i.e., compatibility is means that the SNP is monomorphic within a founding haplotype (otherwise, it would increases the number of founding haplotype which is fixed at six in our dataset)
-
--03_haploCall_RILs2.R: Call the haplotypes blocks in RILs with all the kept SNPs, as more SNPs may help refine the breakpoints.
-
--04_inpute_RILs_missing_SNPs: Using inferred founding haplotype identity across RILs genome, we can impute missing SNPs and spot unlikely genotypes (genotyping error).
-
-========================
-ImageXpress_sex_xgboost
-========================
-
-Sex-specific size was measured by imaging the worms on a ImageXpress instruments and detecting them using the Andersen lab pipeline.
-To differentiate sexes, a XGBoost model was trained on metrics extracted by the Andersen pipeline.
-For objects in the training dataset, sexes was attributed visually by human, or using a strain with a sex-specific fluorescent reporter (QG4602)
-
-- training datasets/: contains training datasets and the script to train the XGBoost model.
-- models/: contains the trained XGBoost models
-- predictSex.R: script used to predict sexes of the worm objects detected by the Andersen pipeline on ImageXpress images.
-
-
-
+R script used to predict the sex of worm objects detected by the Andersen pipeline on ImageXpress images.
