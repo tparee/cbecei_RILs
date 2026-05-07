@@ -74,24 +74,28 @@ for(CHR in c("I","II", "III", 'IV', "V", "X")){
 read_csv("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/RILs/haplotypes/IBD_between_founding_haploid_genomes.csv")
 
 
-
 library(circlize)
 min_gsize_cM = 2
-CHR = "V"
-snps =  as.data.frame(fread(paste0("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/RILs/genotypes/",CHR,"_becei_variantInfo_founders&Rils.csv.gz")))
-foundinghaplotype_homology = as.data.frame(fread("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/RILs/haplotypes/IBD_between_founding_haploid_genomes.csv"))
+CHR = "X"
+snps =  as.data.frame(fread(paste0("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/",CHR,"_becei_variantInfo_founders&Rils.csv.gz")))
+foundinghaplotype_homology = as.data.frame(fread("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/haplotypes/IBD_between_founding_haploid_genomes.csv"))
 foundinghaplotype_homology = subset(foundinghaplotype_homology, chrom == CHR)    
 foundinghaplotype_homology = foundinghaplotype_homology[foundinghaplotype_homology$gpos2 - foundinghaplotype_homology$gpos1 > min_gsize_cM,]
 
+
+foundinghaplotype_homology$founder1 = c('Fα.g2', 'Fα.g1','FM.g2', 'FM.g1','Fβ.g2', 'Fβ.g1')[match(foundinghaplotype_homology$founder1, c('FA.g2', 'FA.g1','FM.g2', 'FM.g1','FB.g2', 'FB.g1'))]
+foundinghaplotype_homology$founder2 = c('Fα.g2', 'Fα.g1','FM.g2', 'FM.g1','Fβ.g2', 'Fβ.g1')[match(foundinghaplotype_homology$founder2, c('FA.g2', 'FA.g1','FM.g2', 'FM.g1','FB.g2', 'FB.g1'))]
+
 if(CHR == 'X'){
   foundercolors = c('#2A6218', '#9CC891','#0E1A52',"#C1443E", '#DFB640')
-  foundernames = c('FA.g2', 'FA.g1','FM.g1','FB.g2', 'FB.g1')
-  
+  foundernames = factor(c('Fα.g2', 'Fα.g1','FM','Fβ.g2', 'Fβ.g1'), levels = rev(c('Fα.g2', 'Fα.g1','FM','Fβ.g2', 'Fβ.g1')))
   foundinghaplotype_homology = subset(foundinghaplotype_homology, !grepl("FM.g2",founder1) & !grepl("FM.g2",founder2))
+  foundinghaplotype_homology$founder1[foundinghaplotype_homology$founder1 == "FM.g1"] = "FM"
+  foundinghaplotype_homology$founder2[foundinghaplotype_homology$founder2 == "FM.g1"] = "FM"
   
 }else{
   foundercolors = c('#2A6218', '#9CC891','#0E1A52', '#6DB9D2',"#C1443E", '#DFB640')
-  foundernames = c('FA.g2', 'FA.g1','FM.g2', 'FM.g1','FB.g2', 'FB.g1')
+  foundernames = factor(c('Fα.g2', 'Fα.g1','FM.g2', 'FM.g1','Fβ.g2', 'Fβ.g1'), levels = rev(c('Fα.g2', 'Fα.g1','FM.g2', 'FM.g1','Fβ.g2', 'Fβ.g1')))
 }
 
 

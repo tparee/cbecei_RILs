@@ -68,7 +68,7 @@ vcomp[2]/sum(vcomp[2:3])
 
 
 fixedBlock = F
-perm = T
+perm = F
 if(perm==T){n=500}else{n=1}
 
 fixed_effect_modelMatrix = model.matrix( ~ block, size)
@@ -171,8 +171,8 @@ vcomp[2]/sum(vcomp[2:3])
 
 
 fixedBlock = F
-perm = T
-if(perm==T){n=500)}else{n=1}
+perm = F
+if(perm==T){n=500}else{n=1}
 
 fixed_effect_modelMatrix = model.matrix( ~ block, size)
 
@@ -250,31 +250,30 @@ for(i in 1:n){
 
 
 
-
-threshold_alpha0.05 = -log10(quantile( apply(permutated_pvals, 2, min) , prob = 0.05)) # 3.914705 
-threshold_alpha0.1 = -log10(quantile( apply(permutated_pvals, 2, min) , prob = 0.1)) # 3.595249 
-#save(permutated_pvals, file= "analysis/permutated_pvals_sizeDiv.Rdata")
-
-ggplot()+
-  geom_point(data = res_LOCO, aes(cm, -log10(pval)))+
-  #geom_point(data = res_LOCO, aes(cm, -log10(p)),size=1)+
-  facet_grid(.~chrom, scales='free_x')+theme_classic()#+
-  #geom_hline(yintercept = threshold_alpha0.05)
-
-
 res_LOCO_div = res_LOCO
+
+#save(res_LOCO_div, file = "analysis/QTLmapping/GWAS_EMMAX_LOCO_SizeSexDiv.Rdata")
+#save(res_LOCO_conv, file = "analysis/QTLmapping/GWAS_EMMAX_LOCO_SizeSexConv.Rdata")
+load("analysis/QTLmapping/GWAS_EMMAX_LOCO_SizeSexDiv.Rdata")
+load("analysis/QTLmapping/GWAS_EMMAX_LOCO_SizeSexConv.Rdata")
+
+
+permutated_pvals_sexdiv = unlist(read.table("analysis/temp/permutated_pval_sizediv.txt"))
+permutated_pvals_sexconv = unlist(read.table("analysis/temp/permutated_pval_sizeconv.txt"))
+threshold_alpha0.05_sexdiv = -log10(quantile( permutated_pvals_sexdiv , prob = 0.05)) # 5.319379
+threshold_alpha0.05_sexconv = -log10(quantile( permutated_pvals_sexconv , prob = 0.05)) # 4.70245 
 
 
 
 pgwas = ggplot(res_LOCO_div)+
   facet_grid(.~chrom, scales='free_x')+theme_Publication3()+
-  coord_cartesian(ylim = c(0,-log10(min( rbind(res_LOCO_div, res_LOCO_conv)$p))+0.6))+
-  geom_hline(yintercept = 3.914705 , color =  "#B56516")+
-  geom_hline(yintercept = 4.454741 , color = "#F8D1A2")+
+  coord_cartesian(ylim = c(0,-log10(min( rbind(res_LOCO_div, res_LOCO_conv)$pval, na.rm=T))+3))+
+  geom_hline(yintercept = threshold_alpha0.05_sexconv , color =  "#B56516")+
+  geom_hline(yintercept = threshold_alpha0.05_sexdiv , color = "#F8D1A2")+
   #geom_hline(yintercept = threshold_alpha0.1, color = "#0073B3")+
   #geom_rect(data=data.frame(chrom="I"), aes(xmin = linked[1], xmax=linked[2],ymin=-Inf, ymax = Inf), fill = "yellow", color=NA, alpha=0.5)+
-  geom_point(data = res_LOCO_conv, size=0.25,  aes(cm, -log10(p)), color = 'grey')+
-  geom_point(data = res_LOCO_div, size=0.25,  aes(cm, -log10(p)), color = 'black')+
+  geom_point(data = res_LOCO_conv, size=0.25,  aes(cm, -log10(pval)), color = 'grey')+
+  geom_point(data = res_LOCO_div, size=0.25,  aes(cm, -log10(pval)), color = 'black')+
   geom_point( data = data.frame(chrom = unique(res_LOCO$chrom), x=0,y=0), aes(x,y),color = NA)+
   #geom_point(data = subset(snps2, -log10(pval) > threshold_alpha0.05), alpha=1, size=1.2,  aes(cm, -log10(pval)), fill = "red", shape = 21, color='black')+
   theme(panel.spacing = unit(0, "lines"))+
