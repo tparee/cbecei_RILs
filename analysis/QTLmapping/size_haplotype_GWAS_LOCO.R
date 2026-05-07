@@ -159,7 +159,7 @@ for(n in 1:niter){
       
       # Model with haplo
       fit <- mmes(
-        div ~ haplo,
+        conv ~ haplo,
         random = ~ block +  vsm(ism(id), Gu=Ghap),
         data = dt, verbose = F, W = diag(dt$weight_rotated)
       )
@@ -196,10 +196,10 @@ for(n in 1:niter){
   
   if(permutation){
     minp = min(hapgwas$pval)
-    write(minp, file = 'analysis/QTLmapping/haplotypeGWAS_permutation_results_sizeDiv_LOCO.txt', append = TRUE)
+    write(minp, file = 'analysis/QTLmapping/haplotypeGWAS_permutation_results_sizeConv_LOCO.txt', append = TRUE)
     
   }else{
-    save(hapgwas, file = "analysis/QTLmapping/haplotypeGWAS_sizeDiv_results_LOCO.Rdata")
+    save(hapgwas, file = "analysis/QTLmapping/haplotypeGWAS_sizeConv_results_LOCO.Rdata")
   }
   
   
