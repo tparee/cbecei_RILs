@@ -35,25 +35,17 @@ Finally, founder identity across the RIL genomes was inferred. SNPs consistent w
 
 ### `[N]_genotypes_becei_RILs_stringentFiltering.csv`
 
-RIL genotype table:
-
-```text
-[SNPs × RILs]
-```
-
-generated using highly stringent filtering criteria.
+RIL genotype table (SNPs × RILs) generated using highly stringent filtering criteria.
+`[N]` corresponds to the chromosome (I, II, III, IV, V, X)
 
 ### `[N]_genotypes_snps_RILs_stringentFiltering.csv`
 
-Corresponding SNP annotation table.
+Corresponding SNP annotation table. 
 
-### Chromosome notation
 
-`[N]` corresponds to the chromosome:
 
-```text
-I, II, III, IV, V, X
-```
+
+
 
 ## Stringent Filtering Parameters
 
