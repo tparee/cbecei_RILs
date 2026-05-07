@@ -22,6 +22,9 @@ Multiple founders can also occur when a heterozygous diplotype is detected `ishe
 Within the `founder` column:`&` separates the two haplotypes of a heterozygous diplotype, while `;` separates multiple possible founder identities that cannot be distinguished because of IBD
 Example: `FA.g1&FM.g1;FM.g2` cooresponds to first haplotype being `FA.g1` and second haplotype: either `FM.g1` or `FM.g2`.
 
+The haplotyping was done using `suppl/haplotypeReconstruction`
+
+
 ---
 
 ## `recombination_breakpoints.csv`
