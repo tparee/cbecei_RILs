@@ -1,0 +1,221 @@
+// Keywords: nonWF, non-Wright-Fisher, migration, dispersal
+
+
+
+initialize() {
+
+	//setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/simu_panel_derivation/");
+	setwd("/Users/Sol/Documents/simu_panel_derivation/");
+	initializeSLiMModelType("nonWF");
+	
+	if (exists("slimgui")) {
+	
+	defineConstant("nlines", 10);     // number of subpopulations
+	defineConstant("nG_outcross", 8);
+	defineConstant("nloci", 500);
+	defineConstant("N", 1000);
+	defineConstant('chromType', 'X');
+	defineConstant('outpath', 'temp/X/');
+	};
+	
+
+	
+	
+	initializeMutationType("m1", 0.5, "f", 0);
+	m1.convertToSubstitution = F;
+	
+	initializeGenomicElementType("g1", m1, 1.0);
+	initializeGenomicElement(g1, 0, (nloci*2)-1);
+	initializeMutationRate(0);
+	
+	rr = 0.5/nloci;
+	
+	ends = 0:((nloci*2)-1);
+	rr = c(0,0,rep(c(rr,0), nloci-1));
+	initializeRecombinationRate(rr, ends);
+	
+	initializeSex(chromType);
+}
+
+
+1 early() {
+// create nlines + 1 meta environment (~plates)
+// Only put the population in the first one, for the outcrossing phase and leave other empty for now
+	//for (i in 1:(nlines+1)){sim.addSubpop(i, (i == 1) ? N else 0);};
+	
+	for (i in 1:(nlines+1)){sim.addSubpop(i, (i == 1) ? 2 else 0, sexRatio=0.5);};
+	
+	print(p1.individuals.sex);
+	h1 = p1.individuals[0].genome1;
+	h2 = p1.individuals[0].genome2;
+	h3 = p1.individuals[1].genome1;
+	//h4 = p1.individuals[1].genome2;
+	muts = h1.addNewMutation(m1, 0.0, 0:((nloci*2)-1));
+	
+	
+	h2.addMutations(muts[rep(c(0,1), nloci) == 1]);
+	h3.addMutations(muts[rep(c(1,0), nloci) == 1]);
+	
+	
+	community.rescheduleScriptBlock(s1, start=2, end=nG_outcross+1); // outcrossing generations
+	
+	community.rescheduleScriptBlock(s2, start=3, end=nG_outcross+1+25); // main reproduction callback
+	community.rescheduleScriptBlock(s7, start=nG_outcross+1+26, end=nG_outcross+1+26); // main reproduction callback
+	
+	community.rescheduleScriptBlock(s3, start=nG_outcross+1+1, end=nG_outcross+1+1); // migration to small plates
+	
+	community.rescheduleScriptBlock(s4, start=nG_outcross+1+2, end=nG_outcross+1+26); // sib-mating phase
+	//community.rescheduleScriptBlock(s5, start=nG_outcross+1+2, end=nG_outcross+1+26); // sib-mating phase
+	
+	community.rescheduleScriptBlock(s6, start=nG_outcross+1+26, end=nG_outcross+2+26); // output
+	
+	
+}
+
+
+
+2 reproduction() {
+
+	if(individual == p1.individuals[0]){
+	
+	sex = c(rep(1,asInteger(round(asFloat(N)/2))), rep(0,asInteger(round(asFloat(N)/2))));
+	for(i in sex){
+	newind = subpop.addCrossed(individual, p1.individuals[1], ifelse(i==1,'M','F'));
+	//newind.tag = i;
+	};
+	
+	};
+
+}
+
+
+
+s1 2000 early() {
+// Generations of random ouctcrossing in the meta population 1
+	for (subpop in sim.subpopulations){
+		subpop.subsetIndividuals(minAge=1).fitnessScaling=0.0;
+	};
+	
+	
+}
+
+
+s2 2000 reproduction() {
+
+	//if(individual== sim.subpopulations.individuals[1]){print('HERE');print(sim.cycle);};
+
+	if(individual.sex == "F"){ // if female
+	for(i in 0:1){
+	newind = subpop.addCrossed(individual, sample(subpop.individuals[subpop.individuals.sex=="M"],1), ifelse(i==1,'M','F'));
+	//newind.tag = i;
+	};
+	
+	
+	};
+	
+}
+
+
+
+s7 2000 reproduction() {
+
+	//if(individual== sim.subpopulations.individuals[1]){print('HERE');print(sim.cycle);};
+
+	if(individual.sex == "F"){ // if female
+	for(i in 0:1){
+	newind = subpop.addCrossed(individual, sample(subpop.individuals[subpop.individuals.sex=="M"],1),"F");
+	//newind.tag = i;
+	};
+	
+	
+	};
+	
+}
+
+
+s3 2000 early() {
+	// random select individuals and migrate them to the meta environment for the sib-mating phase
+	nIndividuals = sum(sim.subpopulations.individualCount);
+	inds = sim.subpopulations.individuals;
+	//migrantsMale = sample(inds[inds.tag == 1], nlines);
+	//migrantsFemale = sample(inds[inds.tag == 0], nlines);
+	
+	migrantsMale = sample(inds[inds.sex == "M"], nlines);
+	migrantsFemale = sample(inds[inds.sex == "F"], nlines);
+	
+	for (i in 0:(nlines-1)){
+	
+		thisSubpop = sim.subpopulations[i+1];
+		male = migrantsMale[i];
+		female = migrantsFemale[i];
+		
+		thisSubpop.takeMigrants(male);
+		thisSubpop.takeMigrants(female);
+		
+	}
+	
+	p1.individuals.fitnessScaling=0.0; // kill the source population
+	
+	
+	// density-dependence and random extinctions
+	//for (subpop in sim.subpopulations)
+	//{
+	//	if (runif(1) < e)
+	//		sim.killIndividuals(subpop.individuals);
+	//	else
+	//		subpop.fitnessScaling = K / subpop.individualCount;
+	//}
+}
+
+
+s4 2000 early() {
+	// sib-mating phase
+	for (subpop in sim.subpopulations){
+		subpop.subsetIndividuals(minAge=1).fitnessScaling=0.0;
+	};
+}
+
+
+//s5 2000 late(){
+
+//		heterozygosity=NULL;
+//		nhetlines = 0;
+//		for(i in 0:((nlines*2)-1)){
+//			pos1 = sim.subpopulations.individuals.genome1[i].positionsOfMutationsOfType(m1);
+//			pos2 = sim.subpopulations.individuals.genome2[i].positionsOfMutationsOfType(m1);
+			
+//			pos1 = match(0:(2*nloci-1), pos1);
+//			pos2 = match(0:(2*nloci-1), pos2);
+//			pos1 = ifelse(pos1==-1, 0,1);
+//			pos2 = ifelse(pos2==-1, 0,1);
+//			pos = pos1+pos2;
+			
+//			nhet = sum(pos==1);
+//			phet = nhet/(2*nloci);
+			
+//			if(phet > 0){nhetlines = nhetlines+1;};
+			
+//			heterozygosity = c(heterozygosity,  phet); // absolute genetic value of an individual if additive
+//		};
+		
+		
+//		print(mean(heterozygosity));
+//		print(nhetlines);
+
+
+//}
+
+
+
+
+late() {
+	if (sum(sim.subpopulations.individualCount) == 0)
+		stop("Global extinction in cycle " + sim.cycle + ".");
+}
+
+
+
+s6 2000 late() {
+	outfile = paste("./",outpath,"/outputMS_",getSeed(), ".txt", sep="");
+	sim.subpopulations.individuals.genomes.outputMS(filePath=outfile);
+}
