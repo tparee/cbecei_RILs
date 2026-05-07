@@ -12,15 +12,7 @@ This supplementary directory contains pipelines used to:
 The `.fastq` files were aligned to the *C. becei* QG2082 reference genome  
 (DOI: https://doi.org/10.1101/2025.05.09.653148).
 
-Variants were called using `bcftools mpileup`, retaining variants with:
-
-- `QUAL > 20`
-
-The selected genotype for each site is the genotype minimizing the PL value (Phred-scaled likelihood). Genotypes with:
-
-- `GQ < 10` (genotype likelihood < 0.9)
-
-were set to `NA`.
+Variants were called using `bcftools mpileup`, retaining variants with `QUAL > 20`. The selected genotype for each site is the genotype minimizing the PL value (Phred-scaled likelihood). Genotypes with `GQ < 10` (genotype likelihood < 0.9) were set to `NA`.
 
 Because the RILs are mosaics of recombined founding haplotypes, variant filtering was performed by reconstructing the haplotype block structure and retaining only SNPs consistent with this structure.
 
@@ -36,14 +28,6 @@ For these SNPs, the log-likelihood of observing the allelic depths in the CrossP
 Founding haplotypes were then estimated by selecting combinations of RIL haplotype blocks that maximize the founder genotype log-likelihood (see `haplotypeReconstruction`).
 
 Finally, founder identity across the RIL genomes was inferred. SNPs consistent with the inferred haplotype mosaic were retained, while inconsistent SNPs were filtered out.
-
-The number of SNPs retained at each filtering step is reported in:
-
-```text
-XXXX.csv
-```
-
----
 
 # `genotype_stringentFiltering`
 
