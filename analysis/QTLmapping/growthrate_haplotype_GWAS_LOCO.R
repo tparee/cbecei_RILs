@@ -217,7 +217,7 @@ load("analysis/QTLmapping/haplotypeGWAS_growthrate_results_LOCO.Rdata")
 hapgwas = do.call(rbind, lapply(split(hapgwas, hapgwas$chrom), function(x){
   
   CHR = x$chrom[1]
-  snps = as.data.frame(read_csv(paste0("genotypes/chr",CHR,"_beceiPanels_snps_founders&Rils_haplotypeResolved_V1.csv.gz")))
+  snps = as.data.frame(read_csv(paste0("genotypes/",CHR,"_becei_variantInfo_founders&Rils.csv.gz")))
   
   y = x[c(1,1),]
   
@@ -234,12 +234,11 @@ hapgwas = do.call(rbind, lapply(split(hapgwas, hapgwas$chrom), function(x){
 hapgwas$colorchrom = ifelse(hapgwas$chrom %in% c('II','IV','X'), 'grey30', 'black')
 
 
-perm = unlist(read.table("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/becei_rils/analysis/QTLmapping/haplotypeGWAS_permutation_results_growthrate2.txt", quote="\"", comment.char=""))
+perm = unlist(read.table("analysis/temp/haploGWAS_permutated_pval_growthrate.txt"))
 
-threshold_alpha0.1 = -log10(quantile(perm, 0.1))
+
 threshold_alpha0.05 = -log10(quantile(perm, 0.05))
-threshold_alpha0.05 =5
-qtllim = range(subset(hapgwas, -log10(pval)>threshold_alpha0.05)$gpos)
+#qtllim = range(subset(hapgwas, -log10(pval)>threshold_alpha0.05)$gpos)
 
 p = ggplot(hapgwas)+
   #geom_hline(yintercept = threshold_alpha0.1, color = "#0073B3")+
@@ -259,5 +258,9 @@ p = ggplot(hapgwas)+
 
 ggsave(p, file="figures/fig_gwas_haplotype_growthrate_LOCO.png", width=3.6, height=1.15, dpi=1200)
 ggsave(p, file="figures/fig_gwas_haplotype_growthrate_LOCO.pdf", width=3.6, height=1.15, dpi=1200)
+
+
+
+
 
 
