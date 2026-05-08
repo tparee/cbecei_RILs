@@ -100,19 +100,21 @@ for(thisqtl in c(qtl1, qtl2, qtl3, qtl4)){
   res_LOCO$asso[res_LOCO$id %in% asso] = thisqtl
 }
 
-subset(res_LOCO, t < -5)
 
-ggplot(data = res_LOCO, aes(s, t*-1))+theme_Publication3()+
+res_LOCO = res_LOCO[-isinf,]
+
+p=ggplot(data = res_LOCO, aes(s, t*-1))+theme_Publication3()+
   geom_hline(yintercept = 0,color = 'grey30')+geom_vline(xintercept = 0, color = 'grey30')+
   geom_point(data = subset(res_LOCO, is.na(asso)), size = 0.8, color = 'grey', shape=1, alpha= 0.5)+
   geom_point(data = subset(res_LOCO, !is.na(asso)), aes(color= as.factor(asso)), size = 1.5)+
-  geom_point(data = subset(res_LOCO, leadingsnp == T), aes(fill= as.factor(asso)), size = 3, shape = 21, color = "black")+
+  geom_point(data = subset(res_LOCO, leadingsnp == T), aes(fill= as.factor(asso)), size = 1.9, shape = 21, color = "black")+
   geom_smooth(data = res_LOCO, method='lm', linetype = 'dashed', se=F, color = 'black')+
-  scale_color_manual(values = c("#D2605E","#488A8B", "#3D7EB6","#DB8539"), name = 'QTL for growth rate')+
-  scale_fill_manual(values = c("#D2605E","#488A8B", "#3D7EB6", "#DB8539"), name = 'QTL for growth rate')+
+  scale_color_manual(values = c("#D2605E","#488A8B","#DB8539","#3D7EB6"), name = 'QTL for growth rate')+
+  scale_fill_manual(values = c("#D2605E","#488A8B",  "#DB8539","#3D7EB6"), name = 'QTL for growth rate')+
   ylab("Minor allele's t-value for growth rate")+
   xlab("Selection coeficient during panel derivation")+
   theme(legend.key.size = unit(0.7,"line"))
 
 
-ggsave(p, file="figures/fig_tvalue~s.png", width=3, height=1.85, dpi=1200)
+ggsave(p, file="figures/Fig_tvalue~s.png", width=3, height=1.85, dpi=1200)
+
