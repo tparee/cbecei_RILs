@@ -41,25 +41,8 @@ colnames(phasedfounderhaplotypes)=foudernames
 
 ####### haplotyping #######
 
-#3093
-#3094
+
 rils = rils[,colnames(rils) %in% meta$rilname]
-
-# "QG3143"
-# "QG3144"
-# "QG3146"
-# "QG3157"
-# "QG3172"
-# "QG3204"
-# "QG3220"
-# "QG3227"
-# "QG3249"
-# "QG3251"
-#  "QG3254"
-# "QG3257"
-# "QG3265"
-
-thisril = "QG3500" # "QG3272"
 
 rilhaplotypes = lapply(colnames(rils), function(thisril){
   print(thisril)
