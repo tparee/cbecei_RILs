@@ -225,7 +225,7 @@ modh2 <- mmer(
 vcomp = summary(modh2)$varcomp
 
 
-#V                   arComp VarCompSE   Zratio Constraint
+#                   VarComp   VarCompSE   Zratio Constraint
 #block.conv-conv    0.539196 0.3683031 1.464001   Positive
 #u:strain.conv-conv 0.360911 0.1936264 1.863956   Positive
 #units.conv-conv    1.058958 0.1671784 6.334298   Positive

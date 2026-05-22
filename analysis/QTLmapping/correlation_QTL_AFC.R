@@ -16,6 +16,7 @@ for(CHR in unique(res_LOCO$chrom)){
   fgt = as.matrix(read_csv(paste0("genotypes/",CHR,"_becei_genotypes_founders.csv.gz")))
   snps = as.data.frame(read_csv(paste0("genotypes/",CHR,"_becei_variantInfo_founders&Rils.csv.gz")))
   fgt = fgt[match(subset(res_LOCO, chrom == CHR)$id,snps$ID),]
+  if(CHR == "X"){fgt[,5] = NA}
   FGT = rbind(FGT,fgt)
 }
 
@@ -56,7 +57,7 @@ res_LOCO$t = res_LOCO$beta/res_LOCO$SE # t-value
 res_LOCO$rils_allelefreq = apply( genotypes, 1, mean,na.rm=T)
 res_LOCO$founders_allelefreq = apply(FGT, 1, mean,na.rm=T)
 res_LOCO$afc = res_LOCO$rils_allelefreq - res_LOCO$founders_allelefreq # allele frequency change
-res_LOCO$s = (qlogis(res_LOCO$rils_allelefreq) - qlogis(res_LOCO$founders_allelefreq))/5 # selection coefficient
+res_LOCO$s = (qlogis(res_LOCO$rils_allelefreq) - qlogis(res_LOCO$founders_allelefreq)) # selection coefficient
 isinf = which(is.infinite(res_LOCO$s))
 
 
@@ -96,7 +97,10 @@ for(thisqtl in c(qtl1, qtl2, qtl3, qtl4)){
 res_LOCO = res_LOCO[-isinf,]
 FGT = FGT[-isinf,]
 
-p=ggplot(data = res_LOCO, aes(s, t))+theme_Publication3()+
+#qtl_snps = subset(res_LOCO, !is.na(asso))
+#save(qtl_snps,file = "analysis/temp/qtl_snps.Rdata")
+
+p=ggplot(data = res_LOCO, aes(afc, t))+theme_Publication3()+
   geom_hline(yintercept = 0,color = 'grey30')+geom_vline(xintercept = 0, color = 'grey30')+
   geom_point(data = subset(res_LOCO, is.na(asso)), size = 0.8, color = 'grey', shape=1, alpha= 0.5)+
   geom_point(data = subset(res_LOCO, !is.na(asso)), aes(color= as.factor(asso)), size = 1.5)+
@@ -105,7 +109,7 @@ p=ggplot(data = res_LOCO, aes(s, t))+theme_Publication3()+
   scale_color_manual(values = c("#D2605E","#488A8B","#DB8539","#3D7EB6"), name = 'QTL for growth rate')+
   scale_fill_manual(values = c("#D2605E","#488A8B",  "#DB8539","#3D7EB6"), name = 'QTL for growth rate')+
   ylab("Minor allele's t-value for growth rate")+
-  xlab("Selection coeficient during panel derivation")+
+  xlab("Allele frequency change during panel derivation")+
   theme(legend.key.size = unit(0.7,"line"))
 
 
@@ -113,7 +117,7 @@ p=ggplot(data = res_LOCO, aes(s, t))+theme_Publication3()+
 
 
 
-p2 = ggplot(data = res_LOCO, aes(s, t))+theme_Publication3()+
+p2 = ggplot(data = res_LOCO, aes(afc, t))+theme_Publication3()+
   geom_hline(yintercept = 0,color = 'grey30')+geom_vline(xintercept = 0, color = 'grey30')+
   geom_point(data = subset(res_LOCO, is.na(asso)), size = 0.8, color = 'grey', shape=1, alpha= 0.5)+
   geom_point(data = subset(res_LOCO, !is.na(asso)), aes(color= as.factor(asso)), size = 1.5)+
@@ -122,11 +126,11 @@ p2 = ggplot(data = res_LOCO, aes(s, t))+theme_Publication3()+
   scale_color_manual(values = c("#D2605E","#488A8B","#DB8539","#3D7EB6"), name = 'QTL for growth rate')+
   scale_fill_manual(values = c("#D2605E","#488A8B",  "#DB8539","#3D7EB6"), name = 'QTL for growth rate')+
   ylab("Minor allele's t-value for growth rate")+
-  xlab("Selection coeficient during panel derivation")+
+  xlab("Allele frequency change during panel derivation")+
   theme(legend.key.size = unit(0.7,"line"))+
   facet_wrap(~chrom)
 
-ggsave(p2, file="figures/Fig_tvalue~s_chrom.png", width=5, height=3, dpi=1200)
+ggsave(p2, file="figures/SFig_tvalue~afc_chrom.png", width=5, height=3, dpi=1200)
 
 
 
@@ -157,13 +161,14 @@ foundersfreq = lapply(split(foundersfreq, foundersfreq$chrom), function(x){
 
 
 
+
 qtlchrom =  (res_LOCO$chrom %in% c("I","II","X"))
-robs = cor(res_LOCO$t, res_LOCO$s, use = "complete.obs" )
-robs_withoutqtl = cor(res_LOCO$t[!qtlchrom], res_LOCO$s[!qtlchrom], use = "complete.obs" )
+robs = cor(res_LOCO$t, res_LOCO$afc, use = "complete.obs" )
+robs_withoutqtl = cor(res_LOCO$t[!qtlchrom], res_LOCO$afc[!qtlchrom], use = "complete.obs" )
 
 perm_r = do.call(rbind,lapply(1:10000, function(n){
   if(n %% 100 == 0){print(n)}
-  permutated_s = do.call(c,lapply(foundersfreq, function(X){
+  permutated_afc = do.call(c,lapply(foundersfreq, function(X){
    
     X = as.data.frame(X)
     CHR = X$chrom[1]
@@ -175,32 +180,28 @@ perm_r = do.call(rbind,lapply(1:10000, function(n){
     
     colnames(FGTperm) = cnames
     
-    if(CHR == "X"){
-      fouders_af_perm = apply(t(FGTperm) * ifelse(cnames == 'FM.g2',2,1), 2, sum)/4
-    }else{
-      fouders_af_perm = apply(FGTperm, 1, mean)
-    }
+    fouders_af_perm = apply(FGTperm, 1, mean, na.rm=T)
    
     
     #plot(out-fouders_allelefreq,
     #     res_LOCO$rils_allelefreq[res_LOCO$chrom == CHR]-res_LOCO$founders_allelefreq[res_LOCO$chrom == CHR])
     
     rilaf_perm = apply(X * FGTperm, 1, sum)
-    s_perm = qlogis(rilaf_perm)-qlogis(fouders_af_perm)
-   
+    #s_perm = qlogis(rilaf_perm)-qlogis(fouders_af_perm)
+    afc_perm = rilaf_perm - fouders_af_perm
     
-    return(s_perm)
+    return(afc_perm)
   }))
  
-  rperm = cor(res_LOCO$t, permutated_s, use = "complete.obs" )
-  rperm_withoutqtl = cor(res_LOCO$t[!qtlchrom], permutated_s[!qtlchrom], use = "complete.obs" )
+  rperm = cor(res_LOCO$t, permutated_afc, use = "complete.obs" )
+  rperm_withoutqtl = cor(res_LOCO$t[!qtlchrom], permutated_afc[!qtlchrom], use = "complete.obs" )
   
   data.frame(rperm,rperm_withoutqtl)
  
 }))
 
-#save(perm_r, file = "analysis/temp/null_QTL_s_correlation.Rdata")
-load("analysis/temp/null_QTL_s_correlation.Rdata")
+#save(perm_r, file = "analysis/temp/null_QTL_afc_correlation.Rdata")
+load("analysis/temp/null_QTL_afc_correlation.Rdata")
 
 quantile(perm_r$rperm, prob = 0.95)
 quantile(perm_r$rperm_withoutqtl, prob = 0.95)
@@ -236,7 +237,7 @@ p_perm  = ggplot(perm_r, aes(x = rperm, y = 1, fill = stat(quantile))) +
 
 
 
-p = ggplot(data = res_LOCO, aes(s, t))+theme_Publication3()+
+p = ggplot(data = res_LOCO, aes(afc, t))+theme_Publication3()+
   geom_hline(yintercept = 0,color = 'grey30')+geom_vline(xintercept = 0, color = 'grey30')+
   geom_point(data = subset(res_LOCO, is.na(asso)), size = 0.8, color = 'grey', shape=1, alpha= 0.5)+
   geom_point(data = subset(res_LOCO, !is.na(asso)), aes(color= as.factor(asso)), size = 1.5)+
@@ -245,18 +246,19 @@ p = ggplot(data = res_LOCO, aes(s, t))+theme_Publication3()+
   scale_color_manual(values = c("#D2605E","#488A8B","#DB8539","#3D7EB6"), name = 'QTL for growth rate')+
   scale_fill_manual(values = c("#D2605E","#488A8B",  "#DB8539","#3D7EB6"), name = 'QTL for growth rate')+
   ylab("Minor allele's t-value for growth rate")+
-  xlab("Selection coeficient during panel derivation")+
+  xlab("Allele frequency change during panel derivation")+
   theme(legend.key.size = unit(0.7,"line"))+
+  xlim(-0.152,0.19)+ylim(-11,5.463)+
   inset_element(
     p_perm,
-    left = 0.62,
+    left = 0.64,
     bottom = 0.01,
     right = 1.06,
     top = 0.45
   )
   
 
-ggsave(p, file="figures/Fig_tvalue~s2.png", width=3, height=1.85, dpi=1200)
+ggsave(p, file="figures/Fig_tvalue~afc.png", width=3.5, height=2.2, dpi=1200)
 
 robs
 
@@ -276,10 +278,6 @@ robs
 #   geom_vline(xintercept = robs_withoutqtl, size = 1, linetype = "dashed")
 
 
-mean(perm_r > cor(res_LOCO$t*-1, res_LOCO$s, use = "complete.obs" ))
-
-
-c(qtl1, qtl2, qtl3, qtl4)
 
 
 
