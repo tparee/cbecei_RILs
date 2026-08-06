@@ -13,7 +13,7 @@
 # Repository structure:
 
 ```text
-CBCI_RILs
+cbecei_RILs
 ├── analysis
 │   ├── GenomicCharacterization
 │   ├── QTLmapping
