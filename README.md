@@ -1,5 +1,4 @@
-### This repository contains the resources for the Caenorhabditis becei RIL panels
-### and corresponds to this article: "Caenorhabditis becei recombinant inbred lines (beRILs) reveal the scope of heritable variation within a gonochoristic nematode population"
+### This repository contains the resources for the Caenorhabditis becei RIL panels and corresponds to this article: "Caenorhabditis becei recombinant inbred lines (beRILs) reveal the scope of heritable variation within a gonochoristic nematode population"
 
 `genotypes/` contains the genotypes of RILs that have been resolved with the haplotypes (see "suppl/HaplotypeReconstruction/") + their pruned version 
 
