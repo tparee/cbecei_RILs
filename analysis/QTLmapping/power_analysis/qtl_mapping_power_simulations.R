@@ -77,9 +77,11 @@ mapping = function(phenotype, GT, K, perm=F){
 
 
 gwasstats = function(gwas, QTLpos, threshold){
- 
-  sign.snps = which(gwas$p < threshold)
-  isSignificant = QTLpos %in% sign.snps
+  
+  sign.snps = which(gwas$pval < threshold)
+  
+  isqtl = which(gwas$chrom ==  gwas$chrom[QTLpos] & gwas$cm > (gwas$cm[QTLpos] - 3) & gwas$cm < (gwas$cm[QTLpos] + 3))
+  isSignificant = length(intersect(isqtl, sign.snps)) > 0 #QTLpos %in% sign.snps
   
   if(isSignificant){
     
@@ -112,10 +114,10 @@ gwasstats = function(gwas, QTLpos, threshold){
 
 
 # Set simulation parameters
-nsimulation = 500 # number of run per parameter
+nsimulation = 1000 # number of run per parameter
 n_loci <- 1000       # Number of polygenic loci
-heritability <- 0.5           # Total heritability
-QTL_variance_ratio <- c(0.05, 0.9, 0.12, 0.15, 0.18, 0.25)   # Proportion of phenotypic variance explained by QTL
+heritability <- 0.8           # Total heritability
+QTL_variance_ratio <- c(0.05, 0.09, 0.12, 0.15, 0.18, 0.25)   # Proportion of phenotypic variance explained by QTL
 phenotypic_variance <- 1 # Phenotypic variance
 
 
@@ -133,25 +135,19 @@ GT = t(genotypes)
 K=get.K_ASV(GT)
 
 
-for(qtl_variance_ratio in QTL_variance_ratio){
-  print
-  # Permutations
-  nullpvals = unlist(parallel::mclapply(1:500, mc.cores = nc, function(p){
-    if(p %% 50 == 0){print(p)}
-    QTLpos = sample(1:nrow(genotypes),1)
-    pheno = simulate_phenotypes(qtl_variance_ratio = qtl_variance_ratio,
-                                     QTLpos = QTLpos,
-                                     genotypes = genotypes,
-                                     heritability = heritability,
-                                     phenotypic_variance = phenotypic_variance,
-                                     n_loci = n_loci)
-    pres = mapping(phenotype = pheno, GT=GT, K, perm=T)
-    return(min(pres$pval, na.rm = T))
-  }))
-  
-  save(nullpvals, file = paste0("permutated_minp_",IDOUT, "_", qtl_variance_ratio, ".Rdata"))
-  thresholds = data.frame(th =  c(0.01, 0.05, 0.1), p=quantile(nullpvals, probs = c(0.01, 0.05, 0.1)))
-  
+nullpvals = unlist(parallel::mclapply(1:1000, mc.cores = nc, function(p){
+  if(p %% 50 == 0){print(p)}
+  pheno = data.frame(id=rownames(GT), value = rnorm(nrow(GT), sd=sqrt(phenotypic_variance)))
+  pres = mapping(phenotype = pheno, GT=GT, K)
+  return(min(pres$pval, na.rm = T))
+}))
+
+save(nullpvals, file = paste0("nullpvals_",heritability,"_",IDOUT, "_powersimu.Rdata"))
+thresholds = data.frame(th =  c(0.01, 0.05, 0.1), p=quantile(nullpvals, probs = c(0.01, 0.05, 0.1)))
+
+
+for(qtl_variance_ratio in rev(QTL_variance_ratio)){
+
   
   powersim = do.call(rbind, parallel::mclapply(1:nsimulation, mc.cores = nc, function(n){
     if(n %% 50 == 0){print(n)}
@@ -166,10 +162,10 @@ for(qtl_variance_ratio in QTL_variance_ratio){
     res = cbind(snps, res)
     
     #ggplot(res, aes(pos, -log10(pval)))+
-    #      geom_point()+facet_wrap(~chrom)+
-     #       geom_point(data=res[QTLpos,], aes(pos, -log10(pval)), color='red')+
-     #       geom_hline(yintercept = -log10(threshold))+
-      #      theme(legend.position = "none")
+    #    geom_point()+facet_wrap(~chrom)+
+     #   geom_point(data=res[QTLpos,], aes(pos, -log10(pval)), color='red')+
+       #geom_hline(yintercept = -log10(threshold))+
+    #  theme(legend.position = "none")
 
     statout = do.call(rbind, lapply(1:nrow(thresholds), function(i){
       x = gwasstats(gwas=res, QTLpos=QTLpos, threshold=thresholds$p[i])
@@ -182,7 +178,7 @@ for(qtl_variance_ratio in QTL_variance_ratio){
   }))
   
   
-  save(powersim, file = paste0("power_",IDOUT, "_", qtl_variance_ratio, ".Rdata"))
+  save(powersim, file = paste0("power_h2",heritability,"_",IDOUT, "_", qtl_variance_ratio, ".Rdata"))
   
 }
 
