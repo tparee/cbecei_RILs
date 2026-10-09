@@ -87,17 +87,17 @@ for(THISPANEL in c("alpha", "beta")){
   DATA[[THISPANEL]] = list(permdata = permdata, pvalue = pvalue, obsdata = obsdata)
 }
 
-save(DATA, file="~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/analysis/GenomicCharacterization/iterchrom_LD.Rdata")
+#save(DATA, file="~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/analysis/GenomicCharacterization/iterchrom_LD.Rdata")
 pvalue_threhold = 0.05/nrow(chromcomb) # bonferoni correction
 
 
-
+load(file="~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/cbecei_RILs/analysis/GenomicCharacterization/iterchrom_LD.Rdata")
 obsdata = do.call(rbind, lapply(DATA, function(x){ as.data.frame(x$obsdata)}))
 permdata = do.call(rbind, lapply(DATA, function(x){ as.data.frame(x$permdata)}))
 pvalue = do.call(rbind, lapply(DATA, function(x){ as.data.frame(x$pvalue)}))
 
 library("ggridges")
-source("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/utils.R")
+source("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/cebcei_RILs/utils.R")
 
 p=ggplot(permdata, aes(x = meanr2, y = 1, fill = panel))+
   theme_Publication3()+
@@ -110,14 +110,14 @@ p=ggplot(permdata, aes(x = meanr2, y = 1, fill = panel))+
   geom_text(data=pvalue, aes(x=0.011, y = 1100, label = paste0("p=", round(p, digits = 3))), size = 5/.pt)+
   geom_vline(xintercept =  -Inf, color = 'darkgrey')+
   geom_hline(yintercept =  -Inf, color = 'darkgrey')+
-  theme(axis.text.y = element_blank())+
+  theme(axis.text.y = element_blank(), axis.ticks.y = element_blank() )+
   facet_grid(factor(chrom1, labels = c("I","II","III","IV", "V","X"))~factor(chrom2,  labels = c("I","II","III","IV", "V","X")))+
   coord_cartesian(expand = 0)+
-  ylab("")+xlab(expression(r^2))
+  ylab("Density")+xlab(expression(r^2))
 
 
 
-ggsave(p, file="~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/figures/SFig_interchrom_linkage.png", width=7.2, height=6, dpi=1200)
+ggsave(p, file="~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/cbecei_RILs/figures/SFig_interchrom_linkage.png", width=7.2, height=6, dpi=1200)
 
 
 

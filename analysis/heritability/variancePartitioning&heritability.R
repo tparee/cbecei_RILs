@@ -1,5 +1,8 @@
 library(sommer)
-setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/")
+library(readr)
+library(data.table)
+
+setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/cbecei_RILs/")
 meta = read_csv("suppl/RILs_sequencing_metadata.csv")
 ############################################################################
 ############################################################################
@@ -12,8 +15,8 @@ growthrates$log_hours_to_starve = log(growthrates$hours_to_starve)
 growthrates$strain = tstrsplit(growthrates$strain,"_")[[2]]
 growthrates = subset(growthrates, strain %in% meta$rilname[meta$panel == "alpha"])
 
-snps = as.data.frame(read_csv("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/beceiPanels_variantsInfo_pruned0.999.csv.gz"))
-genotypes <- as.matrix(fread("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/beceiPanels_geno_RILs_pruned0.999.csv.gz"))
+snps = as.data.frame(read_csv("genotypes/beceiPanels_variantsInfo_pruned0.999.csv.gz"))
+genotypes <- as.matrix(fread("genotypes/beceiPanels_geno_RILs_pruned0.999.csv.gz"))
 genotypes = (genotypes-0.5)*2
 #genotypes[genotypes == 0]=1
 
@@ -164,6 +167,11 @@ modh2 <- mmer(
 
 var_comp <- summary(modh2)$varcomp
 
+#                                                 VarComp   VarCompSE    Zratio Constraint
+#block.log_hours_to_starve-log_hours_to_starve 0.003928375 0.002296985  1.710231   Positive
+#u:id.log_hours_to_starve-log_hours_to_starve  0.066423280 0.011952577  5.557235   Positive
+#units.log_hours_to_starve-log_hours_to_starve 0.017717136 0.001310872 13.515536   Positive
+
 Va <- var_comp[2,1]
 Ve <- var_comp[3,1]
 SE_Va <- var_comp[2,2]
@@ -192,8 +200,8 @@ SE_h2
 size = as.data.frame(fread("phenotypes/size_summarystat.csv"))
 size = subset(size, strain %in% subset(meta, panel == "alpha")$rilname)
 
-snps = as.data.frame(read_csv("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/beceiPanels_variantsInfo_pruned0.999.csv.gz"))
-genotypes <- as.matrix(fread("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/beceiPanels_geno_RILs_pruned0.999.csv.gz"))
+snps = as.data.frame(read_csv("genotypes/beceiPanels_variantsInfo_pruned0.999.csv.gz"))
+genotypes <- as.matrix(fread("genotypes/beceiPanels_geno_RILs_pruned0.999.csv.gz"))
 genotypes = (genotypes-0.5)*2
 
 genotypes = genotypes[,colnames(genotypes) %in% size$strain]
@@ -405,6 +413,12 @@ modh2 <- mmer(
 )
 
 var_comp <- summary(modh2)$varcomp
+
+#VarComp VarCompSE   Zratio Constraint
+#block.conv-conv    0.5290895 0.3620305 1.461450   Positive
+#u:strain.conv-conv 0.6680535 0.3482698 1.918207   Positive
+#units.conv-conv    1.0338250 0.1655669 6.244153   Positive
+
 Va <- var_comp[2,1]
 Ve <- var_comp[3,1]
 SE_Va <- var_comp[2,2]

@@ -1,6 +1,6 @@
 
 
-setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/")
+setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/cbecei_RILs/")
 source("utils.R")
 
 meta = read_csv("suppl/RILs_sequencing_metadata.csv")
@@ -124,6 +124,7 @@ for(thisfile in ldfiles){
 #write_csv(linkage_physicalDistance, file = "analysis/GenomicCharacterization/linkage_by_physicalDistance.csv")
 #write_csv(linkage_geneticDistance, file = "analysis/GenomicCharacterization/linkage_by_geneticDistance.csv")
 
+
 ################################################################################
 ###################### PLOT LD per chrom #######################################
 
@@ -215,7 +216,6 @@ ggsave(pout, file="figures/Fig_PCA&Linkage.pdf", width=7.2, height=2.22, dpi=120
 
 
 
-
 LDdom = subset(linkage_physicalDistance, domain %in% c("arm", "center"))
 LDdom = do.call(rbind, lapply(split(LDdom, paste0(LDdom$ppos1,LDdom$panel, LDdom$domain )), function(x){
   out = x[1,-which(colnames(x)=='chrom')]
@@ -236,5 +236,17 @@ pdom=ggplot(LDdom, aes((ppos1+ppos2)/2000,mean.r2, linetype = domain, color = pa
 
 ggsave(pdom, file="figures/Fig_Linkage_by_recdom.png", width=4, height=1.3, dpi=1200)
 
+
+pdom2 = ggplot(as.data.frame(subset(linkage_physicalDistance, domain %in% c("arm", "center"))),
+       aes((ppos1+ppos2)/2000,mean.r2, linetype = domain, color = panel))+
+  theme_Publication3()+
+  geom_line(size=0.8)+
+  geom_line(size=0.8)+facet_grid(.~chrom)+ylim(0,1)+
+  scale_color_manual(values=c('#396224','#DAB855','#7CB6CE'), name = "Panel" )+
+  xlab("Physical position (kb)")+
+  ylab(expression(r^2))+
+  theme(legend.key.height = unit(0.3, "cm"))
+
+ggsave(pdom2, file="figures/Fig_Linkage_by_recdom_perchrom.png", width=7, height=1.3, dpi=1200)
 
 
