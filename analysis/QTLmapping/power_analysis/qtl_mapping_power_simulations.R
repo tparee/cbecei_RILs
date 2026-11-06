@@ -85,7 +85,7 @@ gwasstats = function(gwas, QTLpos, threshold){
   
   if(isSignificant){
     
-    highestHit = which.min(gwas$pval)
+    highestHit = isqtl[which.min(gwas$pval[isqtl])]
     
     distance_cM = abs(diff(gwas$cm[c(highestHit, QTLpos)]))
     distance_bp = abs(diff(gwas$pos[c(highestHit, QTLpos)]))

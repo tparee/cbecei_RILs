@@ -6,7 +6,7 @@ library(data.table)
 library(ggplot2)
 library(ggplot2)
 library(gridExtra)
-setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/")
+setwd("/Users/tomparee/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/cbecei_RILs/")
 meta = read_csv("suppl/RILs_sequencing_metadata.csv")
 source("utils.R")
 source("analysis/QTLmapping/EMMAX_functions.R")
@@ -24,12 +24,12 @@ get.K_ASV = function(GT){
 ###################################################################
 
 growthrates = read.csv( "phenotypes/growthrates.csv", sep = " ")
-growthrates$log_hours_to_starve = log(growthrates$hours_to_starve)
+#growthrates$log_hours_to_starve = log(growthrates$hours_to_starve)
 growthrates$strain = tstrsplit(growthrates$strain,"_")[[2]]
 growthrates = subset(growthrates, strain %in% meta$rilname[meta$panel == "alpha"])
 
-snps = as.data.frame(read_csv("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/beceiPanels_variantsInfo_pruned0.999.csv.gz"))
-genotypes <- as.matrix(fread("~/Documents/Documents - MacBook Pro de tom/rockmanlab/becei/CBCI_RILs/genotypes/beceiPanels_geno_RILs_pruned0.999.csv.gz"))
+snps = as.data.frame(read_csv("genotypes/beceiPanels_variantsInfo_pruned0.999.csv.gz"))
+genotypes <- as.matrix(fread("genotypes/beceiPanels_geno_RILs_pruned0.999.csv.gz"))
 genotypes = (genotypes-0.5)*2
 #genotypes[genotypes == 0]=1
 
@@ -50,14 +50,14 @@ GT[is.na(GT)]=0
 K=get.K_ASV(GT)
 
 modh2 <- mmer(
-  log_hours_to_starve ~ block,
+  log_hours_to_starve ~ 1,
   random = ~  block + vs(id, Gu = K),
   data = growthrates
 )
 
 summary(modh2)$varcomp[1:2,1]/sum(summary(modh2)$varcomp[1:2,1])
 
-# block:0.1340243, K: 0.8659757
+# block:0.1128707 0.8871293
 
 #############################################################################
 ############### SNP by EMMAX + LOCO #########################################
@@ -97,7 +97,7 @@ for(CHR in c("I",'II', 'III', 'IV', 'V','X')){
       data = growthrates
     )
     
-    vcomp = summary(modh2)$varcomp[1:32,1]
+    vcomp = summary(modh2)$varcomp[1:2,1]
     deltachr = vcomp[2]/vcomp[1]
   }
   
